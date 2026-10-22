@@ -1,0 +1,32 @@
+{
+  "name": "boxshift-puzzle",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An original, offline-ready Sokoban puzzle adventure",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src tests scripts --max-warnings 0",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "build": "tsc --noEmit && vite build && node scripts/build-sw.mjs",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@fontsource-variable/outfit": "^5.2.8",
+    "@phosphor-icons/core": "^2.1.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^24.10.0",
+    "eslint": "^9.39.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.0",
+    "vite": "^7.1.12",
+    "vitest": "^3.2.4"
+  },
+  "engines": { "node": ">=22.13.0" },
+  "packageManager": "pnpm@11.25.0"
+}
