@@ -2,15 +2,16 @@ import { defineConfig, devices } from '@playwright/test';
 
 const externalURL = process.env.PLAYWRIGHT_BASE_URL;
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
+const isCI = Boolean(process.env.CI);
 
 export default defineConfig({
   testDir: './tests',
   testMatch: 'e2e.spec.ts',
   fullyParallel: true,
   workers: 2,
-  retries: process.env.CI ? 1 : 0,
-  timeout: 30_000,
-  expect: { timeout: 7_000 },
+  retries: isCI ? 1 : 0,
+  timeout: isCI ? 90_000 : 30_000,
+  expect: { timeout: isCI ? 15_000 : 7_000 },
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: externalURL ?? 'http://127.0.0.1:4173',
@@ -37,7 +38,12 @@ export default defineConfig({
     },
     {
       name: 'desktop-webkit',
-      use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 960 } },
+      use: {
+        ...devices['Desktop Safari'], viewport: { width: 1440, height: 960 },
+        // Linux CI rasterizes Canvas in software. Keep the CSS viewport and
+        // assertions while local WebKit continues to cover the preset's DPR 2.
+        ...(isCI ? { deviceScaleFactor: 1 } : {}),
+      },
       grepInvert: /touch controls/,
     },
   ],
