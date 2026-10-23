@@ -1,6 +1,6 @@
 # BOXSHIFT — Registo de validação
 
-Estado em **22 de outubro de 2026**, após o reforço da campanha e a implementação dos novos limites de ajuda. As verificações de uma revisão anterior não confirmam automaticamente esta revisão.
+Estado em **23 de outubro de 2026**, após o reforço da campanha, a implementação dos novos limites de ajuda e a publicação pública verificada.
 
 ## Evidência executada
 
@@ -16,7 +16,7 @@ Estado em **22 de outubro de 2026**, após o reforço da campanha e a implementa
 
 As rotas verificadas usam 25–53 movimentos nos primeiros 15 níveis, 63–140 nos 15 intermédios e 133–209 nos 10 difíceis. Os finais têm 4–6 caixas e as soluções independentes exigem pelo menos 24 empurrões. Os movimentos incluem deslocações entre empurrões; não são apresentados como mínimos de movimentos.
 
-TypeScript, ESLint e build de produção da revisão atual aprovados. A suite atual tem **27 cenários E2E aprovados**: 26 na execução completa em Chromium/WebKit e o cenário tátil móvel numa repetição focada após corrigir a preparação do teste. Os 40 níveis foram concluídos por teclado nos dois motores. Joker, limites de sugestões, avanço automático, sessão, idiomas, modos, expiração, offline e layouts foram exercitados.
+TypeScript, ESLint e build de produção da revisão atual aprovados. A suite atual tem **27 cenários E2E aprovados**. Além da validação local, a execução final no GitHub aprovou os 27 cenários numa só execução, sem repetições. Os 40 níveis foram concluídos por teclado nos dois motores. Joker, limites de sugestões, avanço automático, sessão, idiomas, modos, expiração, offline e layouts foram exercitados.
 
 ## Regras verificadas no navegador
 
@@ -37,14 +37,21 @@ Foram verificados tabuleiro completo, contadores, Joker, reinício, pausa, gesto
 
 ## Publicação
 
-| Item | Estado |
+| Item | Resultado confirmado |
 | --- | --- |
-| Repositório dedicado [Scalifornia/boxshift-puzzle](https://github.com/Scalifornia/boxshift-puzzle) | Criado; publicação inicial do código por confirmar |
-| GitHub Actions | Workflow preparado; primeira execução por confirmar |
-| GitHub Pages | Configuração/publicação por confirmar |
-| Endereço previsto | `https://scalifornia.github.io/boxshift-puzzle/` — teste HTTPS público pendente |
+| Código | Disponível em [Scalifornia/boxshift-puzzle](https://github.com/Scalifornia/boxshift-puzzle) |
+| CI da versão do jogo | [Execução n.º 4](https://github.com/Scalifornia/boxshift-puzzle/actions/runs/40026842151) aprovada: tipos, lint, 79 testes, build e **27 E2E sem repetições**, em 6,8 minutos de testes de navegador |
+| Campanha no CI | 40 níveis concluídos por teclado em Chromium (2,6 minutos) e WebKit (5,2 minutos) |
+| GitHub Pages | Deploy aprovado do commit `2bc8fe7424ecd4fd92735e55aa6194537b59c097`; fonte GitHub Actions e HTTPS obrigatório |
+| Endereço público | [Jogar BOXSHIFT](https://scalifornia.github.io/boxshift-puzzle/) — HTTP 200 e percursos aprovados em Chromium e WebKit em 23/10/2026 |
+| Recursos publicados | JavaScript `index-CyTPG4I_.js` e CSS `index-BbRkzXIJ.css` com SHA-256 igual ao build local; sem 404, falhas de recursos ou erros de página nos percursos testados |
+| Regras no endereço público | Joker recua exatamente dois movimentos uma única vez; duas sugestões, terceira bloqueada; limites preservados após reinício, menu e recarregamento |
+| Progresso no endereço público | Vitória por teclado no nível 1, avanço automático ao nível 2, marcadores de nível atual/concluído e desbloqueio guardado |
+| Offline no endereço público | Recarregamento sem rede, recuperação do nível 2 e movimento legal aprovados nos dois motores |
 
-Um build local ou um commit não demonstra uma publicação. A entrega requer confirmar o workflow, abrir o endereço público e exercer o jogo servido por esse endereço.
+A primeira execução Linux excedeu o limite de 30 segundos durante a sequência de teclas do Daily em WebKit; houve também uma expectativa de 7 segundos a aguardar o avanço de nível. Os cenários passaram na execução final. A CI usa limites de 90 segundos por cenário, 15 segundos por expectativa e 600 segundos para os 40 níveis. O WebKit Linux usa DPR 1 com o mesmo viewport CSS de 1440×960 e todas as asserções. Localmente mantêm-se DPR 2 em WebKit e limites de 30, 7 e 180 segundos, respetivamente.
+
+A verificação pública usou contextos isolados e comparou os recursos servidos com o build testado. Os commits seguintes atualizam apenas esta documentação e o README; os ficheiros executáveis do jogo permanecem os mesmos. Instalação, áudio, gestos e desempenho em iPhone/Android físicos continuam pendentes.
 
 ## Comandos de validação
 
