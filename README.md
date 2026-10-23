@@ -4,9 +4,9 @@ Um pequeno robô. Um mundo de puzzles.
 
 BOXSHIFT é uma aventura de lógica inspirada nas regras clássicas do Sokoban: empurra cada caixa até a um destino, planeia o caminho e evita ficar sem espaço para manobrar. Joga no navegador com teclado, gestos ou controlos táteis, sem conta e sem instalação obrigatória.
 
-[Código-fonte](https://github.com/Scalifornia/boxshift-puzzle) · [Estado da publicação](https://github.com/Scalifornia/boxshift-puzzle/actions)
+[JOGAR AGORA](https://scalifornia.github.io/boxshift-puzzle/) · [Código-fonte](https://github.com/Scalifornia/boxshift-puzzle) · [Verificações automáticas](https://github.com/Scalifornia/boxshift-puzzle/actions)
 
-**Endereço previsto do jogo:** <https://scalifornia.github.io/boxshift-puzzle/>. A publicação e a verificação pública estão pendentes até à conclusão do primeiro workflow. Consulta o registo de validação em [docs/QA.md](docs/QA.md).
+**Publicado em GitHub Pages e verificado por HTTPS em 23 de outubro de 2026.** Joker, sugestões, avanço automático, progresso e utilização offline foram exercitados no endereço público em Chromium e WebKit. Consulta a evidência e as limitações em [docs/QA.md](docs/QA.md).
 
 ## O jogo
 
