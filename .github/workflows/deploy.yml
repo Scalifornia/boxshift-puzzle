@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: boxshift-${{ github.workflow }}-${{ github.ref }}
@@ -21,18 +21,6 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
-      - name: Import verified source snapshot
-        run: |
-          if [ -f boxshift-source.zip ]; then
-            echo "db99a97846471e14b160ba6e473db60d2769452b30196e38c84421e47f6e3c9c  boxshift-source.zip" | sha256sum --check -
-            unzip -q -o boxshift-source.zip
-            rm boxshift-source.zip
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add .
-            git commit -m 'Import verified BOXSHIFT source and tests'
-            git push
-          fi
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
