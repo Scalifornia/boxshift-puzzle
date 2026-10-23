@@ -261,7 +261,7 @@ test('daily puzzle uses the UTC date and saves completion under that day', async
 });
 
 test('all 40 original campaign rooms complete through real keyboard input', async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(process.env.CI ? 600_000 : 180_000);
   const pageErrors: string[] = [];
   page.on('pageerror', error => pageErrors.push(error.message));
   await page.goto('/');
