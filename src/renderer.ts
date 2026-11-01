@@ -1,6 +1,7 @@
 import type { Direction, Level, State } from './engine';
+import type { InfernoLevel, InfernoState } from './inferno';
 
-export type Theme = 'warehouse' | 'neon' | 'garden' | 'city';
+export type Theme = 'warehouse' | 'neon' | 'garden' | 'city' | 'inferno';
 
 type Palette = {
   background: string; halo: string; foundation: string; foundationEdge: string;
@@ -11,6 +12,13 @@ type Palette = {
 };
 
 const PALETTES: Record<Theme, Palette> = {
+  inferno: {
+    background:'#161418',halo:'#d12f40',foundation:'#32252d',foundationEdge:'#0c0b10',
+    floor:['#49414a','#4e454e','#453d46','#514750'],seam:'#857380',
+    wall:'#22232c',wallLight:'#68606a',wallEdge:'#100f17',wallFront:'#17151f',wallMortar:'#4a3845',
+    crate:'#753843',crateLight:'#d4a087',crateDark:'#331e2a',accent:'#ff735c',goalInk:'#ffe3b1',
+    robot:'#dcd5cb',robotLight:'#fff2d7',leaf:'#c13849',leafLight:'#ff8d65',
+  },
   warehouse: {
     background: '#e9e6dc', halo: '#ffefd0', foundation: '#bbb5a2', foundationEdge: '#938b75',
     floor: ['#e8dfc9', '#e5ddc8', '#ece3ce', '#e7dfcd'], seam: '#c9c0a9',
@@ -73,6 +81,10 @@ export class BoardRenderer {
   private bumpUntil = 0;
   private celebrationStart = -10000;
   private hintCell: number | null = null;
+  private renderTime = 0;
+  private impactAt = -10000;
+  private impactKind = '';
+  private impactCell = 0;
   private particles: Particle[] = [];
   private resizeObserver: ResizeObserver;
   private visibilityHandler = () => {
@@ -172,6 +184,7 @@ export class BoardRenderer {
   }
 
   setHint(cell: number | null): void {
+    if(this.hintCell === cell)return;
     this.hintCell = cell;
     this.draw(performance.now());
     this.start();
@@ -186,6 +199,20 @@ export class BoardRenderer {
     }
     this.draw(now);
     this.start();
+  }
+
+  /** Original hit reactions; simulation never waits for an animation. */
+  cue(kind: string): void {
+    if(!this.state||!this.level||kind==='walk')return;
+    this.impactKind=kind;this.impactAt=performance.now();
+    const d=this.direction==='left'?-1:this.direction==='right'?1:this.direction==='up'?-this.level.width:this.level.width;
+    this.impactCell=this.state.player+d;
+    if(kind==='kick'||kind==='strike')this.lastPush=this.impactAt;
+    if(!this.reducedMotion && ['kick','strike','key','escape','trap','exhausted'].includes(kind)){
+      const p=this.coords(kind==='key'||kind==='escape'?this.state.player:this.impactCell);
+      this.spawnSparkles(p.x+.5,p.y+.5,this.impactAt,kind==='strike'?22:12);
+    }
+    this.draw(this.impactAt);this.start();
   }
 
   cellAt(clientX: number, clientY: number): number | null {
@@ -235,7 +262,7 @@ export class BoardRenderer {
 
   private layout(): void {
     if (!this.level) return;
-    const padding = .65;
+    const padding = typeof matchMedia==='function' && matchMedia('(max-width: 767px), (orientation:landscape) and (max-height:540px)').matches ? .22 : .55;
     this.tile = Math.max(1, Math.min(this.width / (this.level.width + padding * 2), this.height / (this.level.height + padding * 2 + .35)));
     this.originX = (this.width - this.level.width * this.tile) / 2;
     this.originY = (this.height - this.level.height * this.tile) / 2 - this.tile * .04;
@@ -281,6 +308,7 @@ export class BoardRenderer {
   }
 
   private draw(now: number): void {
+    this.renderTime=now;
     const c = this.ctx;
     c.clearRect(0, 0, this.width, this.height);
     if (!this.level || !this.state || this.tile < 1) return;
@@ -289,7 +317,9 @@ export class BoardRenderer {
     const boardW = this.level.width * t;
     const boardH = this.level.height * t;
     c.save();
-    c.translate(this.originX, this.originY);
+    const recoil=!this.reducedMotion&&this.theme==='inferno'?Math.max(0,1-(now-this.impactAt)/210):0;
+    c.translate(this.originX+Math.sin(now*.09)*t*.035*recoil,this.originY+Math.cos(now*.13)*t*.025*recoil);
+    if(this.theme==='inferno')this.drawInfernalAir(now,boardW,boardH,palette);
 
     // Light stays behind the board so the cell boundaries remain clear.
     const halo = c.createRadialGradient(boardW * .38, boardH * .32, t, boardW * .5, boardH * .5, Math.max(boardW, boardH) * .8);
@@ -325,7 +355,8 @@ export class BoardRenderer {
       }
     }
 
-    for (const goal of this.goals) this.drawGoal(goal, now, palette);
+    if('exit' in this.level)this.drawInfernalTiles(now,this.level as InfernoLevel,this.state as InfernoState);
+    else for (const goal of this.goals) this.drawGoal(goal, now, palette);
     if (this.hintCell !== null && this.floor.has(this.hintCell)) this.drawHint(this.hintCell, now, palette);
 
     const player = this.playerTween && !this.reducedMotion ? this.position(this.playerTween, now) : this.coords(this.state.player);
@@ -339,10 +370,16 @@ export class BoardRenderer {
       const p = tween && !this.reducedMotion ? this.position(tween, now) : this.coords(cell);
       objects.push({ sort: p.y + .7, draw: () => this.drawCrate(p.x * t, p.y * t, cell, now, palette) });
     }
+    if('exit' in this.level){
+      const st=this.state as InfernoState;
+      for(const cell of st.doors){const p=this.coords(cell);objects.push({sort:p.y+.6,draw:()=>this.drawInfernalObject(cell,'door',now,palette)});}
+      for(const cell of st.enemies){const p=this.coords(cell);objects.push({sort:p.y+.7,draw:()=>this.drawInfernalObject(cell,'sentinel',now,palette)});}
+    }
     objects.push({ sort: player.y + .72, draw: () => this.drawRobot(player.x * t, player.y * t, now, palette) });
     objects.sort((a, b) => a.sort - b.sort);
     for (const object of objects) object.draw();
     this.drawParticles(now);
+    if(this.theme==='inferno')this.drawImpact(now,palette);
     if (this.theme === 'garden') this.drawDriftingLeaves(now, palette);
 
     // A soft diagonal highlight adds depth without obscuring the playable cells.
@@ -354,6 +391,10 @@ export class BoardRenderer {
 
   private drawFloorDetail(x: number, y: number, cell: number, p: Palette): void {
     const t = this.tile;
+    if(this.theme==='inferno'&&hash(cell+51)>.68){
+      this.line(x+t*.14,y+t*.23,x+t*.43,y+t*.42,'#d15b5566',t*.018);
+      this.line(x+t*.43,y+t*.42,x+t*.36,y+t*.72,'#d15b5544',t*.015);
+    }
     if (this.theme === 'neon' && hash(cell + 81) > .42) {
       // Fine printed traces turn the floor into a quiet circuit board.
       const yy = y + t * (.22 + hash(cell + 5) * .55);
@@ -430,7 +471,17 @@ export class BoardRenderer {
     c.restore();
     // Sparse original set dressing lives on top of walls, away from play space.
     const decoration = hash(cell + 333);
-    if (this.theme === 'garden') {
+    if(this.theme==='inferno'){
+      if(!north&&decoration>.5){
+        this.roundRect(x+t*.36,y+t*.12,t*.28,t*.3,t*.03,'#201b28','#8e5667',t*.02);
+        const flicker=this.reducedMotion?1:.85+Math.sin(this.renderTime*.014+cell)*.15;
+        c.save();c.translate(x+t*.5,y+t*.11);c.scale(1,flicker);
+        c.beginPath();c.moveTo(-t*.09,0);c.quadraticCurveTo(-t*.16,-t*.15,t*.03,-t*.33);c.quadraticCurveTo(t*.03,-t*.12,t*.1,-t*.09);c.quadraticCurveTo(t*.15,t*.04,-t*.09,0);c.fillStyle='#ef6251';c.fill();
+        this.ellipse(0,-t*.045,t*.045,t*.09,'#ffe1a4');c.restore();
+      }else if(!south&&decoration<.48){
+        for(let n=0;n<4;n++)this.roundRect(x+t*.5-t*.035,y+t*(.23+n*.11),t*.07,t*.13,t*.03,'#2c2231','#9b7481',t*.018);
+      }
+    } else if (this.theme === 'garden') {
       if (decoration > .58) this.drawWallGrowth(x, y - rise, cell, p);
       if (!north && decoration > .55 && t > 19) this.drawPlant(x + t * .52, y + t * .25, t * .78, p, decoration > .7);
     } else if (this.theme === 'city') {
@@ -538,6 +589,11 @@ export class BoardRenderer {
   }
 
   private drawCrateSurface(x: number, y: number, size: number, cell: number, p: Palette): void {
+    if(this.theme==='inferno'){
+      this.roundRect(x+size*.16,y+size*.16,size*.68,size*.68,size*.03,'#3a2736','#c49186',size*.03);
+      this.line(x+size*.5,y+size*.25,x+size*.73,y+size*.5,'#ecc8a4',size*.055);this.line(x+size*.73,y+size*.5,x+size*.5,y+size*.75,'#ecc8a4',size*.055);this.line(x+size*.5,y+size*.75,x+size*.27,y+size*.5,'#ecc8a4',size*.055);this.line(x+size*.27,y+size*.5,x+size*.5,y+size*.25,'#ecc8a4',size*.055);
+      this.ellipse(x+size*.5,y+size*.5,size*.06,size*.06,'#e7605c');return;
+    }
     const t = this.tile;
     if (this.theme === 'neon') {
       // A luminous core and branched traces replace the warehouse's timber X.
@@ -582,7 +638,115 @@ export class BoardRenderer {
     }
   }
 
+  private drawInfernalAir(now:number,w:number,h:number,p:Palette):void {
+    const c=this.ctx,t=this.tile;
+    // Molten channels stay outside the walkable footprint.
+    this.roundRect(-t*.12,-t*.12,w+t*.24,h+t*.38,t*.16,'#dd3c39');
+    for(let i=0;i<16;i++){
+      const drift=this.reducedMotion?.5:((now*.00014+i*.137)%1);
+      const x=hash(i+901)*w,y=h+t*.3-drift*(h+t*.7);
+      const alpha=Math.sin(drift*Math.PI)*.6;
+      c.globalAlpha=alpha;this.ellipse(x,y,t*(.009+hash(i)*.02),t*.035,p.accent);c.globalAlpha=1;
+    }
+  }
+
+  private drawInfernalTiles(now:number,level:InfernoLevel,state:InfernoState):void {
+    const c=this.ctx,t=this.tile;
+    for(const hazard of level.hazards){
+      const {x,y}=this.coords(hazard.cell),xx=x*t,yy=y*t,active=hazard.phase===state.phase;
+      this.roundRect(xx+t*.12,yy+t*.18,t*.76,t*.63,t*.08,active?'#441e2a':'#2d2a34',active?'#ff765d':'#8a7787',t*.025);
+      for(let i=0;i<3;i++){
+        const sx=xx+t*(.28+i*.22);c.beginPath();c.moveTo(sx-t*.065,yy+t*.65);c.lineTo(sx,yy+t*(active?.26:.55));c.lineTo(sx+t*.065,yy+t*.65);c.closePath();c.fillStyle=active?'#ffcfab':'#81727c';c.fill();
+      }
+      c.fillStyle=active?'#ff765d':'#a99aa7';c.font=`700 ${t*.12}px sans-serif`;c.textAlign='center';c.fillText(hazard.phase===0?'I':'II',xx+t*.5,yy+t*.88);
+    }
+    const exit=this.coords(level.exit),x=(exit.x+.5)*t,y=(exit.y+.52)*t;
+    const pulse=this.reducedMotion?0:Math.sin(now*.004)*.025;
+    c.save();c.translate(x,y);c.rotate(this.reducedMotion?0:now*.00012);
+    c.strokeStyle='#ff8a68';c.lineWidth=t*.035;c.beginPath();c.arc(0,0,t*(.34+pulse),0,Math.PI*2);c.stroke();
+    for(let i=0;i<8;i++){const a=i*Math.PI/4;this.line(Math.cos(a)*t*.27,Math.sin(a)*t*.27,Math.cos(a)*t*.34,Math.sin(a)*t*.34,'#ffe1bc',t*.025);}
+    c.restore();this.ellipse(x,y,t*.21,t*.21,state.hasKey?'#e84550':'#45333e');
+    this.ellipse(x,y,t*.12,t*.13,'#15121d');this.line(x-t*.06,y,x+t*.06,y,'#fff1d4',t*.035);
+    if(level.key!==undefined&&!state.hasKey){
+      const k=this.coords(level.key),kx=(k.x+.5)*t,ky=(k.y+.5)*t+(this.reducedMotion?0:Math.sin(now*.005)*t*.045);
+      c.save();c.translate(kx,ky);c.rotate(-.65);this.ellipse(0,-t*.1,t*.095,t*.095,'#f4c780');this.ellipse(0,-t*.1,t*.04,t*.04,'#5d3841');this.line(0,0,0,t*.22,'#f4c780',t*.055);this.line(0,t*.17,t*.09,t*.17,'#f4c780',t*.045);c.restore();
+    }
+  }
+
+  private drawInfernalObject(cell:number,kind:'door'|'sentinel',now:number,p:Palette):void {
+    const {x,y}=this.coords(cell),t=this.tile,xx=x*t,yy=y*t;
+    if(kind==='door'){
+      this.roundRect(xx+t*.09,yy-t*.03,t*.82,t*.98,t*.08,'#322832','#8b6571',t*.035);
+      for(let i=0;i<4;i++)this.line(xx+t*(.22+i*.18),yy+t*.1,xx+t*(.22+i*.18),yy+t*.83,'#a88790',t*.043);
+      this.ellipse(xx+t*.5,yy+t*.48,t*.12,t*.13,'#e04b50');this.line(xx+t*.5,yy+t*.43,xx+t*.5,yy+t*.55,'#ffe2bb',t*.035);
+      return;
+    }
+    const bob=this.reducedMotion?0:Math.sin(now*.004+cell)*t*.025;
+    this.ellipse(xx+t*.5,yy+t*.81,t*.28,t*.095,'#07070d77');
+    this.roundRect(xx+t*.25,yy+t*.38+bob,t*.5,t*.4,t*.09,'#302b39','#74616e',t*.025);
+    this.line(xx+t*.5,yy+t*.4+bob,xx+t*.5,yy+t*.69+bob,'#a3838c',t*.035);
+    this.roundRect(xx+t*.26,yy+t*.06+bob,t*.48,t*.43,t*.16,'#d5c6ba','#8a737c',t*.025);
+    for(const side of [-1,1]){
+      this.ellipse(xx+t*(.5+side*.115),yy+t*.27+bob,t*.065,t*.082,'#1e1926');
+      this.line(xx+t*(.5+side*.15),yy+t*.27+bob,xx+t*(.5+side*.08),yy+t*.27+bob,p.accent,t*.027);
+      this.line(xx+t*(.5+side*.22),yy+t*.09+bob,xx+t*(.5+side*.31),yy-t*.04+bob,'#e6d3bb',t*.06);
+    }
+    this.roundRect(xx+t*.43,yy+t*.38+bob,t*.14,t*.085,t*.02,'#76616d');
+    for(let i=0;i<3;i++)this.line(xx+t*(.45+i*.05),yy+t*.39+bob,xx+t*(.45+i*.05),yy+t*.45+bob,'#ead7bd',t*.018);
+  }
+
+  private drawInfernalKnight(x:number,y:number,now:number,p:Palette):void {
+    const t=this.tile,c=this.ctx,moving=!this.reducedMotion&&now-this.lastMove<180;
+    const age=now-this.lastPush,pushing=!this.reducedMotion&&age<240&&age>=0;
+    const pulse=pushing?Math.sin(age/240*Math.PI):0;
+    const dx=this.direction==='left'?-1:this.direction==='right'?1:0,dy=this.direction==='up'?-1:this.direction==='down'?1:0;
+    const stride=moving?Math.sin((now-this.lastMove)*.04)*t*.045:0;
+    const victory=!this.reducedMotion&&now-this.celebrationStart<1800;
+    const lift=victory?Math.abs(Math.sin((now-this.celebrationStart)*.008))*t*.15:0;
+    this.ellipse(x+t*.5,y+t*.84,t*.29,t*.1,'#07060b85');
+    c.save();c.translate(x+t*.5+dx*t*.13*pulse,y+t*.45+dy*t*.09*pulse-lift+(this.reducedMotion?0:Math.sin(now*.003)*t*.012));
+    c.rotate(dx*pulse*.14+(moving?stride/t*.3:0));
+    // A forked crimson scarf and ivory horn antennae are our courier's silhouette.
+    c.beginPath();c.moveTo(-t*.12,t*.03);c.lineTo(-t*.44,t*(.34+(this.reducedMotion?0:Math.sin(now*.008)*.05)));c.lineTo(-t*.25,t*.3);c.lineTo(-t*.36,t*.47);c.lineTo(t*.09,t*.23);c.closePath();c.fillStyle='#c7384a';c.fill();
+    for(const side of [-1,1]){
+      this.roundRect(side*t*.13-t*.075,t*.19+stride*side,t*.15,t*.21,t*.035,'#1b1824','#79626c',t*.02);
+      this.line(side*t*.13-t*.06,t*.37+stride*side,side*t*.13+t*.06,t*.37+stride*side,'#debc9e',t*.025);
+      c.beginPath();c.moveTo(side*t*.14,-t*.23);c.lineTo(side*t*.32,-t*.53);c.lineTo(side*t*.29,-t*.13);c.closePath();c.fillStyle=p.robotLight;c.fill();
+    }
+    this.roundRect(-t*.235,-t*.015,t*.47,t*.32,t*.07,'#e4d7c4','#8e727b',t*.025);
+    this.roundRect(-t*.24,-t*.29,t*.48,t*.37,t*.1,'#ded5c9','#a89498',t*.025);
+    this.roundRect(-t*.205,-t*.23,t*.41,t*.23,t*.065,'#201c29');
+    for(const side of [-1,1]){
+      const ex=side*t*.1+dx*t*.025;
+      this.line(ex-t*.045,-t*(pushing?.1:.135),ex+t*.045,-t*(pushing?.14:.135),'#ffb77d',t*(pushing?.029:.045));
+    }
+    this.roundRect(-t*.05,-t*.045,t*.1,t*.027,t*.007,pushing?'#fff1d2':'#955463');
+    this.roundRect(-t*.24,t*.04,t*.48,t*.08,t*.025,'#b92d43');
+    this.ellipse(0,t*.17,t*.055,t*.045,'#3e293a');this.ellipse(0,t*.16,t*.023,t*.025,'#ff8c62');
+    for(const side of [-1,1]){
+      const handX=pushing&&dx?dx*t*.48:side*t*(.29+Math.abs(dy)*pulse*.02);
+      const handY=pushing&&dy?dy*t*.39:t*.14;
+      this.line(side*t*.21,t*.08,handX,handY,'#8d7882',t*.075);
+      this.roundRect(handX-t*.06,handY-t*.06,t*.12,t*.13,t*.025,'#e6d3bb','#8e727b',t*.019);
+    }
+    c.restore();
+  }
+
+  private drawImpact(now:number,p:Palette):void {
+    if(this.reducedMotion)return;
+    const progress=(now-this.impactAt)/320;if(progress<0||progress>1)return;
+    const c=this.ctx,t=this.tile,v=this.coords(this.impactCell),x=(v.x+.5)*t,y=(v.y+.5)*t;
+    c.save();c.globalAlpha=1-progress;
+    if(this.impactKind==='kick'||this.impactKind==='strike'){
+      c.translate(x,y);c.rotate(this.direction==='left'?Math.PI:this.direction==='up'?-Math.PI/2:this.direction==='down'?Math.PI/2:0);
+      c.beginPath();c.arc(-t*.15,0,t*(.26+progress*.2),-1.1,1.1);c.strokeStyle='#ffe1b2';c.lineWidth=t*.06*(1-progress);c.stroke();
+      for(let i=0;i<5;i++){const a=(i-2)*.45;this.line(Math.cos(a)*t*(.2+progress*.25),Math.sin(a)*t*(.2+progress*.25),Math.cos(a)*t*(.35+progress*.4),Math.sin(a)*t*(.35+progress*.4),p.accent,t*.025);}
+    }
+    c.restore();
+  }
+
   private drawRobot(x: number, y: number, now: number, p: Palette): void {
+    if(this.theme==='inferno'){this.drawInfernalKnight(x,y,now,p);return;}
     const t = this.tile;
     const c = this.ctx;
     const moving = !this.reducedMotion && now - this.lastMove < 175;

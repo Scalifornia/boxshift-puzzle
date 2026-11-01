@@ -1,4 +1,4 @@
-export type SoundEvent = 'step' | 'push' | 'goal' | 'ungoal' | 'win' | 'click' | 'achievement';
+export type SoundEvent = 'step' | 'push' | 'goal' | 'ungoal' | 'win' | 'click' | 'achievement' | 'kick' | 'strike' | 'trap' | 'key';
 
 type SafariWindow = Window & { webkitAudioContext?: typeof AudioContext };
 
@@ -17,6 +17,12 @@ export class AudioManager {
   private nextNote = 0;
   private beat = 0;
   private effortCount = 0;
+  private intense = false;
+
+  setIntensity(value:boolean):void {
+    if(this.intense===value)return;
+    this.intense=value;this.beat=0;this.nextNote=this.context?.currentTime??0;
+  }
   private readonly melody = [72, 76, 79, 76, 71, 74, 79, 74, 69, 72, 76, 72, 67, 71, 74, 71];
   private readonly roots = [48, 47, 45, 43];
   private readonly visibility = (): void => {
@@ -110,6 +116,19 @@ export class AudioManager {
     const context = this.context;
     if (!context || !this.musicBus || context.state !== 'running' || !this.musicEnabled || this.muted || this.paused || document.hidden) return;
     if (this.nextNote < context.currentTime) this.nextNote = context.currentTime + 0.05;
+    if(this.intense){
+      const bass=[40,40,43,40,39,39,43,47],lead=[64,67,66,64,63,66,71,67];
+      const frequency=(note:number)=>440*2**((note-69)/12);
+      while(this.nextNote<context.currentTime+.6){
+        const n=this.beat%8;
+        this.tone(frequency(bass[n]),this.nextNote,.24,.12,this.musicBus,'triangle');
+        if(this.beat%2===0)this.tone(frequency(lead[n]),this.nextNote,.13,.045,this.musicBus,'square');
+        if(this.beat%4===0)this.tone(100,this.nextNote,.12,.16,this.musicBus,'sine',38);
+        if(this.beat%4===2)this.tone(210,this.nextNote,.055,.045,this.musicBus,'triangle',94);
+        this.beat++;this.nextNote+=.28;
+      }
+      return;
+    }
     // A sparse, original Cmaj7 / G / Am7 / G phrase, with long gaps between notes.
     while (this.nextNote < context.currentTime + 0.6) {
       const midi = this.melody[this.beat % this.melody.length]!;
@@ -163,8 +182,12 @@ export class AudioManager {
     const bus = this.effectsBus;
     if (!context || !bus || context.state !== 'running' || !this.effectsEnabled || this.muted || this.paused || document.hidden || this.destroyed) return;
     const now = context.currentTime;
-    if (event === 'push' || event === 'goal' || event === 'ungoal') this.effort(now, bus);
+    if (event === 'push' || event === 'goal' || event === 'ungoal' || event === 'kick' || event === 'strike') this.effort(now, bus);
     switch (event) {
+      case 'kick': this.tone(145,now,.16,.22,bus,'triangle',42);this.tone(920,now,.055,.06,bus,'square',180);break;
+      case 'strike': this.tone(460,now,.12,.12,bus,'sawtooth',95);this.tone(76,now,.19,.16,bus,'triangle',40);break;
+      case 'trap': this.tone(180,now,.23,.13,bus,'sawtooth',62);this.tone(630,now+.035,.09,.045,bus,'square',110);break;
+      case 'key': [76,83,88].forEach((n,i)=>this.tone(440*2**((n-69)/12),now+i*.045,.27,.09,bus,'sine'));break;
       case 'step': this.tone(185, now, 0.055, 0.095, bus, 'sine', 125); break;
       case 'push':
         this.tone(110, now, 0.13, 0.15, bus, 'triangle', 68);

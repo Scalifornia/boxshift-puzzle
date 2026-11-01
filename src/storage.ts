@@ -1,11 +1,12 @@
 import { detectLanguage, type Language } from './i18n';
+import type { InfernoState } from './inferno';
 
 export interface Settings {
   language: Language;
   music: boolean;
   effects: boolean;
   reducedMotion: boolean;
-  theme: 'warehouse' | 'neon' | 'garden' | 'city';
+  theme: 'warehouse' | 'neon' | 'garden' | 'city' | 'inferno';
 }
 
 export interface RecordResult {
@@ -16,12 +17,13 @@ export interface RecordResult {
   undos: number;
 }
 
-export interface SavedState {
+export interface BasicSavedState {
   player: number;
   boxes: number[];
   moves: number;
   pushes: number;
 }
+export type SavedState = BasicSavedState | InfernoState;
 
 export interface AssistUsage { jokerUsed: boolean; hintsUsed: number }
 
@@ -38,7 +40,7 @@ export interface SaveData {
   achievements: string[];
   session?: {
     levelId: number;
-    mode: 'classic' | 'zen' | 'time' | 'daily';
+    mode: 'classic' | 'zen' | 'time' | 'daily' | 'inferno';
     date?: string;
     state: SavedState;
     history: SavedState[];
@@ -71,7 +73,7 @@ function validDate(value: unknown): value is string {
 }
 
 function validLevelId(value: unknown, mode: unknown): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= (mode === 'daily' ? 1e9 : LEVEL_COUNT);
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= (mode === 'daily' ? 1e9 : mode === 'inferno' ? 12 : LEVEL_COUNT);
 }
 
 export function freshSave(): SaveData {
@@ -100,14 +102,18 @@ function normalizeResult(value: unknown): RecordResult | undefined {
   };
 }
 
-function normalizeState(value: unknown): SavedState | undefined {
+function normalizeState(value: unknown, inferno = false): SavedState | undefined {
   const state = object(value);
-  if (!state || !Number.isInteger(state.player) || (state.player as number) < 0 || (state.player as number) > 4095 || !Array.isArray(state.boxes) || state.boxes.length === 0 || state.boxes.length > 100 || typeof state.moves !== 'number' || typeof state.pushes !== 'number') return undefined;
+  if (!state || !Number.isInteger(state.player) || (state.player as number) < 0 || (state.player as number) > 4095 || !Array.isArray(state.boxes) || (!inferno && state.boxes.length === 0) || state.boxes.length > 100 || typeof state.moves !== 'number' || typeof state.pushes !== 'number') return undefined;
   if (!state.boxes.every(position => Number.isInteger(position) && position >= 0 && position <= 4095)) return undefined;
   const boxes = state.boxes as number[];
   if (new Set(boxes).size !== boxes.length || boxes.includes(state.player as number)) return undefined;
   const moves = number(state.moves);
-  return { player: state.player as number, boxes: [...boxes], moves, pushes: Math.min(moves, number(state.pushes)) };
+  const base = { player: state.player as number, boxes: [...boxes], moves, pushes: Math.min(moves, number(state.pushes)) };
+  if (!inferno) return base;
+  const positions = (v: unknown): v is number[] => Array.isArray(v) && v.length <= 100 && v.every(c => Number.isInteger(c) && c >= 0 && c <= 4095) && new Set(v).size === v.length;
+  if (typeof state.hasKey !== 'boolean' || !positions(state.doors) || !positions(state.enemies) || ![0, 1].includes(state.phase as number) || !['playing', 'won', 'failed'].includes(state.status as string) || typeof state.spent !== 'number' || !Number.isFinite(state.spent) || state.spent < moves) return undefined;
+  return { ...base, hasKey: state.hasKey, doors: [...state.doors], enemies: [...state.enemies], phase: state.phase as 0 | 1, spent: number(state.spent), status: state.status as InfernoState['status'], ...(state.status === 'failed' ? { failure: 'budget' as const } : {}) };
 }
 
 function normalizeSave(value: unknown): SaveData {
@@ -118,11 +124,11 @@ function normalizeSave(value: unknown): SaveData {
   if (settings) {
     if (settings.language === 'pt' || settings.language === 'fr' || settings.language === 'en') base.settings.language = settings.language;
     for (const key of ['music', 'effects', 'reducedMotion'] as const) if (typeof settings[key] === 'boolean') base.settings[key] = settings[key];
-    if (['warehouse', 'neon', 'garden', 'city'].includes(settings.theme as string)) base.settings.theme = settings.theme as Settings['theme'];
+    if (['warehouse', 'neon', 'garden', 'city', 'inferno'].includes(settings.theme as string)) base.settings.theme = settings.theme as Settings['theme'];
   }
   base.unlocked = Math.max(1, number(source.unlocked, 1, LEVEL_COUNT));
   for (const [key, entry] of Object.entries(object(source.records) ?? {})) {
-    if (!/^(?:(?:zen|time):)?(?:[1-9]|[1-3]\d|40)$/.test(key)) continue;
+    if (!/^(?:(?:zen|time):)?(?:[1-9]|[1-3]\d|40)$/.test(key) && !/^inferno:(?:[1-9]|1[0-2])$/.test(key)) continue;
     const result = normalizeResult(entry);
     if (result) base.records[key] = result;
   }
@@ -131,7 +137,7 @@ function normalizeSave(value: unknown): SaveData {
     if (validDate(key) && result) base.daily[key] = result;
   }
   for (const [key, entry] of Object.entries(object(source.assists) ?? {})) {
-    if (!/^(?:(?:zen|time):)?(?:[1-9]|[1-3]\d|40)$/.test(key) && !(key.startsWith('daily:') && validDate(key.slice(6)))) continue;
+    if (!/^(?:(?:zen|time):)?(?:[1-9]|[1-3]\d|40)$/.test(key) && !/^inferno:(?:[1-9]|1[0-2])$/.test(key) && !(key.startsWith('daily:') && validDate(key.slice(6)))) continue;
     const usage = object(entry);
     if (usage) base.assists[key] = { jokerUsed: usage.jokerUsed === true, hintsUsed: number(usage.hintsUsed, 0, 2) };
   }
@@ -139,9 +145,9 @@ function normalizeSave(value: unknown): SaveData {
   if (stats) base.stats = { seconds: number(stats.seconds, 0, 1e9, false), pushes: number(stats.pushes), solved: number(stats.solved) };
   if (Array.isArray(source.achievements)) base.achievements = [...new Set(source.achievements.filter((entry): entry is string => typeof entry === 'string' && achievements.includes(entry)))];
   const session = object(source.session);
-  if (session && validLevelId(session.levelId, session.mode) && ['classic', 'zen', 'time', 'daily'].includes(session.mode as string)) {
-    const state = normalizeState(session.state);
-    const history = Array.isArray(session.history) ? session.history.map(normalizeState) : [];
+  if (session && validLevelId(session.levelId, session.mode) && ['classic', 'zen', 'time', 'daily', 'inferno'].includes(session.mode as string)) {
+    const state = normalizeState(session.state, session.mode === 'inferno');
+    const history = Array.isArray(session.history) ? session.history.map(s => normalizeState(s, session.mode === 'inferno')) : [];
     if (state && history.every((entry): entry is SavedState => Boolean(entry)) && (session.mode !== 'daily' || validDate(session.date))) {
       base.session = {
         levelId: session.levelId as number,
@@ -221,7 +227,7 @@ function better(result: RecordResult, previous: RecordResult | undefined): boole
 export function recordWin(data: SaveData, levelId: number, mode: string, result: RecordResult, date?: string): { data: SaveData; newBest: boolean; newAchievements: string[] } {
   const next = normalizeSave(data);
   const score = normalizeResult(result);
-  if (!score || !validLevelId(levelId, mode) || !['classic', 'zen', 'time', 'daily'].includes(mode) || (mode === 'daily' && !validDate(date))) return { data: next, newBest: false, newAchievements: [] };
+  if (!score || !validLevelId(levelId, mode) || !['classic', 'zen', 'time', 'daily', 'inferno'].includes(mode) || (mode === 'daily' && !validDate(date))) return { data: next, newBest: false, newAchievements: [] };
   const key = mode === 'daily' ? date! : mode === 'classic' ? String(levelId) : `${mode}:${levelId}`;
   const records = mode === 'daily' ? next.daily : next.records;
   const newBest = better(score, records[key]);

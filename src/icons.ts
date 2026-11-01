@@ -1,3 +1,4 @@
+import flame from '@phosphor-icons/core/assets/regular/flame.svg?raw';
 import play from '@phosphor-icons/core/assets/fill/play-fill.svg?raw';
 import arrowRight from '@phosphor-icons/core/assets/regular/arrow-right.svg?raw';
 import arrowLeft from '@phosphor-icons/core/assets/regular/arrow-left.svg?raw';
@@ -26,7 +27,7 @@ import lightning from '@phosphor-icons/core/assets/regular/lightning.svg?raw';
 import city from '@phosphor-icons/core/assets/regular/buildings.svg?raw';
 import flag from '@phosphor-icons/core/assets/regular/flag-checkered.svg?raw';
 
-const icons = { play, arrowRight, arrowLeft, arrowUp, arrowDown, undo, restart, hint, pause, grid, settings, trophy, leaf, timer, sun, cube, sound, muted, close, check, lock, star, help, home, lightning, city, flag };
+const icons = { flame, play, arrowRight, arrowLeft, arrowUp, arrowDown, undo, restart, hint, pause, grid, settings, trophy, leaf, timer, sun, cube, sound, muted, close, check, lock, star, help, home, lightning, city, flag };
 export type IconName = keyof typeof icons;
 export function icon(name: IconName, className = ''): string {
   return `<span class="icon ${className}" aria-hidden="true">${icons[name]}</span>`;
