@@ -1,9 +1,9 @@
 {
   "name": "boxshift-puzzle",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "An original, offline-ready Sokoban puzzle adventure",
+  "description": "Original Sokoban and Infernal Descent puzzle adventures, ready for mobile and offline play",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
@@ -27,6 +27,8 @@
     "vite": "^7.1.12",
     "vitest": "^3.2.4"
   },
-  "engines": { "node": ">=22.13.0" },
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "packageManager": "pnpm@11.25.0"
 }

@@ -1,18 +1,29 @@
 # BOXSHIFT · Puzzle Adventure
 
-Um pequeno robô. Um mundo de puzzles.
+BOXSHIFT 2.0 · Descida Infernal
 
 BOXSHIFT é uma aventura de lógica inspirada nas regras clássicas do Sokoban: empurra cada caixa até a um destino, planeia o caminho e evita ficar sem espaço para manobrar. Joga no navegador com teclado, gestos ou controlos táteis, sem conta e sem instalação obrigatória.
 
 [JOGAR AGORA](https://scalifornia.github.io/boxshift-puzzle/) · [Código-fonte](https://github.com/Scalifornia/boxshift-puzzle) · [Verificações automáticas](https://github.com/Scalifornia/boxshift-puzzle/actions)
 
-**Publicado em GitHub Pages e verificado por HTTPS em 23 de outubro de 2026.** Joker, sugestões, avanço automático, progresso e utilização offline foram exercitados no endereço público em Chromium e WebKit. Consulta a evidência e as limitações em [docs/QA.md](docs/QA.md).
+A versão 2.0 acrescenta a **Descida Infernal**, uma campanha original de 12 salas inspirada na precisão e no ritmo de Helltaker, além dos 40 níveis clássicos. O estado confirmado de cada publicação e os testes executados estão em [docs/QA.md](docs/QA.md).
 
-## O jogo
+## Descida Infernal — versão 2.0
+
+- **12 salas originais:** pontapeia blocos, elimina sentinelas, apanha a chave e chega ao portal dentro de um limite de passos. As últimas quatro salas têm o orçamento exato da solução de menor custo encontrada pelo solver.
+- **Regras visíveis:** uma deslocação, pontapé ou ataque custa 1 passo. Um pontapé move o bloco enquanto o robô fica no lugar. As armadilhas I e II alternam a cada ação; pisar uma que esteja acesa custa mais 2 passos. A chave abre todas as grades. Movimentos bloqueados não gastam passos; é possível vencer no último passo.
+- **Recuperação limitada:** um Joker recua exatamente duas ações, incluindo blocos, sentinelas, chave, fase das armadilhas e passos gastos. Há duas sugestões por sala. Os limites sobrevivem a reinícios e recarregamentos. Quando os passos acabam, a derrota oferece o Joker apenas se ainda estiver disponível.
+- **Cenário original:** fortaleza de obsidiana, tochas e correntes, blocos rúnicos, sentinelas e um robô com armadura e lenço. Pontapés e ataques têm antecipação, impacto, partículas e expressão; o áudio é inteiramente sintetizado e original. A redução de movimento desativa animações contínuas.
+- **Menu com uma cena viva:** demonstração animada e botão de entrada; o texto promocional anterior foi removido. A demonstração não grava vitórias nem consome os recursos do jogador.
+- **iPhone e outros ecrãs pequenos:** tabuleiro com a largura disponível, HUD compacto e ações na base. Gestos funcionam em toda a área livre do jogo; botões e janelas mantêm as suas ações. Toques no chão da campanha clássica continuam a caminhar sem empurrar caixas. A altura adapta-se ao viewport visível e às safe areas. As barras do navegador só desaparecem quando o próprio navegador permite, por exemplo na instalação no ecrã principal.
+
+A referência de [Helltaker, de vanripper](https://vanripper.itch.io/helltaker) orienta o ritmo de ações e a exigência dos percursos. Os mapas, personagens, desenhos, animações e música deste projeto são próprios. Nenhum recurso de Helltaker é distribuído.
+
+## O jogo clássico
 
 - **40 níveis de campanha:** 15 de dificuldade inicial, 15 intermédios e 10 difíceis. A campanha foi reforçada com 16 mapas novos: começa com 3 caixas e uma rota verificada de 31 movimentos, e os níveis finais têm 4–6 caixas. Três salas adaptam a composição visual das fotografias de referência fornecidas pelo utilizador.
-- **Quatro modos:** Classic Adventure para progredir na campanha, Zen para jogar sem temporizador visível, Time Challenge com limite de tempo e Daily Challenge com resultados por data UTC.
-- **Quatro ambientes:** Warehouse Classic, Neon Laboratory, Secret Garden e Night City. Os temas seguintes desbloqueiam após 5, 15 e 30 níveis da campanha concluídos.
+- **Cinco modos:** Descida Infernal,  Classic Adventure para progredir na campanha, Zen para jogar sem temporizador visível, Time Challenge com limite de tempo e Daily Challenge com resultados por data UTC.
+- **Cinco ambientes:** Fortaleza das Cinzas, Warehouse Classic, Neon Laboratory, Secret Garden e Night City. Os temas seguintes desbloqueiam após 5, 15 e 30 níveis da campanha concluídos.
 - **Progresso pessoal:** estrelas, melhores resultados por modo, conquistas, tempo jogado, caixas empurradas e continuação da sessão.
 - **Ajuda durante o jogo:** um Joker para recuar dois movimentos, duas sugestões por sala, Restart, Pause e avisos de bloqueios óbvios.
 - **Vitórias com continuidade:** passagem automática ao nível seguinte após 1,5 segundos, com o resultado visível e indicação do próximo nível na seleção da campanha.
@@ -93,7 +104,8 @@ TypeScript e Vite fornecem uma aplicação estática pequena. Um renderer própr
 | `src/engine.ts` | Estados, movimentos, colisões, vitória, caminhos e bloqueios |
 | `src/levels.ts` | Campanha, soluções verificáveis e variantes diárias UTC |
 | `src/solver.ts` | Pesquisa de soluções com limites de processamento |
-| `src/solver.worker.ts` | Pesquisa fora da thread da interface |
+| `src/solver.worker.ts` | Pesquisa clássica fora da thread da interface |
+| `src/inferno.ts`, `src/inferno.worker.ts` | Regras de ações, 12 salas e pesquisa infernal por custo |
 | `src/renderer.ts` | Desenho original do robô, tabuleiro, temas e animações |
 | `src/main.ts` | Ecrãs, inputs, modos, sessão e integração dos módulos |
 | `src/audio.ts` | Música e efeitos procedurais com Web Audio |
@@ -104,7 +116,7 @@ TypeScript e Vite fornecem uma aplicação estática pequena. Um renderer própr
 | `scripts/build-sw.mjs` | Cache de produção com versão derivada dos recursos |
 | `tests/` | Verificação automatizada |
 
-As regras operam sobre um estado lógico independente do desenho. As animações não determinam o resultado de um movimento. O solver corre num Web Worker com limite de tempo; se não encontrar uma solução dentro do orçamento, o jogo informa o jogador em vez de bloquear a interface ou sugerir uma jogada aleatória.
+As regras operam sobre um estado lógico independente do desenho. As animações não determinam o resultado de um movimento. Os solvers clássico e infernal correm em Web Workers com limite de tempo; se não encontrar uma solução dentro do orçamento, o jogo informa o jogador em vez de bloquear a interface ou sugerir uma jogada aleatória.
 
 ## GitHub Pages
 
