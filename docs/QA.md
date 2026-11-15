@@ -1,5 +1,19 @@
 # BOXSHIFT — Registo de validação
 
+## Versão 2.0 · 1 de novembro de 2026
+
+**Publicação desta revisão: pendente, verificada em 15 de novembro de 2026.** O código em `src/`, os testes novos e o manifesto já estão guardados no GitHub. A sessão da conta está recuperada. Está em curso o envio dos ficheiros de entrada e documentação, seguido da verificação no GitHub e confirmação do endereço público. O jogo anteriormente publicado permanece acessível. Não confundir a validação local abaixo com publicação da versão 2.0.
+
+- TypeScript, ESLint e build de produção aprovados.
+- **101 testes de lógica e persistência aprovados**, incluindo os 12 novos puzzles resolvidos sem consultar as rotas guardadas, regras de pontapé/ataque/chave/armadilhas, orçamento e compatibilidade dos dados existentes.
+- **35 cenários E2E aprovados numa execução completa em Chromium e WebKit**, com os 40 níveis clássicos e os 12 infernais concluídos por teclado nos dois motores. Inclui Joker, sugestões, derrota e recuperação, progresso, modos, idiomas, offline, gestos fora do tabuleiro e janelas mobile.
+- **37 cenários E2E distintos aprovados no total:** 35 na suite completa e 7 numa execução focada final, que repete 5 cenários e acrescenta 2 de animações. Os novos testes confirmaram a cena viva do menu sem progresso artificial, o impacto de golpe e a imobilidade visual com redução de movimento, em Chromium e WebKit. Offline e gestos foram repetidos sobre o build final.
+- Layouts originais a 320×568, 390×844, 844×390, 768×1024, 1366×768 e 1920×1080. A nova campanha inclui também 390×650 para o espaço reduzido por barras do navegador.
+- Renderização infernal, faíscas, golpes, menu em demonstração e áudio inteiramente originais. FPS sustentados, equilíbrio auditivo e teste desta revisão num iPhone físico permanecem pendentes.
+- Nenhuma supressão de regras de design foi adicionada. O ajuste mobile remove a antiga limitação de altura do menu e liberta o espaço ocupado pelo D-pad.
+
+## Registo da versão anteriormente publicada
+
 Estado em **23 de outubro de 2026**, após o reforço da campanha, a implementação dos novos limites de ajuda e a publicação pública verificada.
 
 ## Evidência executada
