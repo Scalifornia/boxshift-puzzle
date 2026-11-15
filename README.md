@@ -22,7 +22,7 @@ A referência de [Helltaker, de vanripper](https://vanripper.itch.io/helltaker) 
 ## O jogo clássico
 
 - **40 níveis de campanha:** 15 de dificuldade inicial, 15 intermédios e 10 difíceis. A campanha foi reforçada com 16 mapas novos: começa com 3 caixas e uma rota verificada de 31 movimentos, e os níveis finais têm 4–6 caixas. Três salas adaptam a composição visual das fotografias de referência fornecidas pelo utilizador.
-- **Cinco modos:** Descida Infernal,  Classic Adventure para progredir na campanha, Zen para jogar sem temporizador visível, Time Challenge com limite de tempo e Daily Challenge com resultados por data UTC.
+- **Cinco modos:** Descida Infernal, Classic Adventure para progredir na campanha, Zen para jogar sem temporizador visível, Time Challenge com limite de tempo e Daily Challenge com resultados por data UTC.
 - **Cinco ambientes:** Fortaleza das Cinzas, Warehouse Classic, Neon Laboratory, Secret Garden e Night City. Os temas seguintes desbloqueiam após 5, 15 e 30 níveis da campanha concluídos.
 - **Progresso pessoal:** estrelas, melhores resultados por modo, conquistas, tempo jogado, caixas empurradas e continuação da sessão.
 - **Ajuda durante o jogo:** um Joker para recuar dois movimentos, duas sugestões por sala, Restart, Pause e avisos de bloqueios óbvios.
@@ -48,13 +48,13 @@ Ocupa todos os destinos com caixas para concluir uma sala. O robô empurra uma c
 | Pausa | P ou Escape |
 | Ativar/desativar som | M |
 
-No telemóvel ou tablet, desliza sobre o tabuleiro, utiliza as setas táteis ou toca numa casa livre acessível. O percurso automático evita caixas e não as empurra. Os mesmos botões de jogo estão disponíveis em todos os formatos.
+No telemóvel ou tablet, desliza em qualquer área livre do ecrã de jogo para mover o robô. Botões e janelas mantêm as suas ações. Na campanha clássica, tocar numa casa livre acessível faz o robô caminhar até lá sem empurrar caixas. Na Descida Infernal, um toque no tabuleiro indica uma direção e executa uma única ação. Os controlos de Joker, reinício e sugestão ficam na base do ecrã.
 
 **Joker:** há um uso por sala e modo, disponível depois de dois movimentos válidos. Restaura exatamente esses dois movimentos, incluindo jogador, caixas e contadores de movimentos/empurrões. Tentativas contra paredes não contam como movimentos.
 
 **Sugestões:** há duas por sala e modo, incluindo Zen. Cada sugestão encontrada indica a próxima direção de uma solução válida; pesquisas sem resultado e avisos de bloqueio não gastam o orçamento. O uso do Joker e das sugestões permanece guardado ao recomeçar, regressar ao menu ou recarregar a página. Concluir a sala repõe os recursos para uma repetição futura. No Daily, o orçamento corresponde ao puzzle da respetiva data UTC.
 
-Depois de uma vitória, Classic, Zen e Time Challenge avançam automaticamente ao próximo nível após 1,5 segundos; o botão de próximo nível permite avançar imediatamente. Daily e o último nível apresentam o resultado sem avanço automático.
+Depois de uma vitória, Descida Infernal, Classic, Zen e Time Challenge avançam automaticamente ao próximo nível após 1,5 segundos; o botão de próximo nível permite avançar imediatamente. Daily e o último nível apresentam o resultado sem avanço automático.
 
 **Estrelas:** em Classic e Daily, a rota de referência define o objetivo de movimentos: até esse objetivo dá 3 estrelas; até 150% dá 2; as restantes vitórias dão 1. Esta referência é uma solução verificada e pode não ser a solução mínima. Zen atribui 3 estrelas pela conclusão. Time Challenge combina tempo e movimentos; os critérios aparecem em “Como jogar”. Os melhores resultados comparam primeiro estrelas, depois movimentos e depois tempo.
 
