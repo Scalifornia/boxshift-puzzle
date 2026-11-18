@@ -377,6 +377,26 @@ app.addEventListener('pointerdown',e=>{
   const target=(e.target as Element).closest<HTMLElement>('[data-direction]');
   if(target){e.preventDefault();void audio.unlock();doMove(target.dataset.direction as Direction);}
 });
+// A cancelled game gesture can suppress the browser's next synthesized click.
+// Activate touch buttons on release and cancel that click to avoid double actions.
+// Keyboard and mouse activation continue through the regular click handler.
+let touchButton: {target:HTMLButtonElement;id:number;x:number;y:number}|null=null;
+document.addEventListener('touchstart',e=>{
+  const target=(e.target as Element).closest<HTMLButtonElement>('button[data-action]');
+  const touch=e.touches[0];
+  touchButton=target&&!target.disabled&&e.touches.length===1?{target,id:touch.identifier,x:touch.clientX,y:touch.clientY}:null;
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  const touch=Array.from(e.touches).find(t=>t.identifier===touchButton?.id);
+  if(touchButton&&(!touch||e.touches.length!==1||Math.hypot(touch.clientX-touchButton.x,touch.clientY-touchButton.y)>12))touchButton=null;
+},{passive:true});
+document.addEventListener('touchcancel',()=>{touchButton=null;});
+document.addEventListener('touchend',e=>{
+  const button=touchButton;touchButton=null;
+  const touch=Array.from(e.changedTouches).find(t=>t.identifier===button?.id);
+  if(!button||!touch||!e.cancelable||!button.target.isConnected||button.target.disabled||Math.hypot(touch.clientX-button.x,touch.clientY-button.y)>12)return;
+  e.preventDefault();button.target.click();
+},{passive:false});
 document.addEventListener('click',e=>{
   const target=(e.target as Element).closest<HTMLButtonElement>('[data-action]');
   if(!target||target.disabled)return;
