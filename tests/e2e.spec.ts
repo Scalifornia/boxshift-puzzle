@@ -284,7 +284,7 @@ test('all 40 original campaign rooms complete through real keyboard input', asyn
     await test.step(`Solve room ${level.id}: ${level.name}`, async () => {
       await expect(page.locator('#moves')).toHaveText('0');
       await solve(page, level);
-      if (level.id < 40) await completion(page).locator('[data-action="next"]').click();
+      if (level.id < 40) await expect(page.locator('.mobile-level b')).toHaveText(String(level.id+1).padStart(2,'0'));
       expect((await saved(page)).records[String(level.id)]).toMatchObject({ moves: level.solution.length, stars: 3 });
     });
   }
@@ -435,7 +435,9 @@ test('infernal descent completes all twelve original rooms within their step bud
     for(const d of room.solution)await page.keyboard.press(key[d]);
     await expect(page.locator('#completion:visible,dialog.win-dialog[open]')).toBeVisible();
     expect((await saved(page)).records[`inferno:${room.id}`]).toMatchObject({stars:3,moves:room.solution.length});
-    if(room.id<INFERNO_LEVELS.length)await page.locator('#completion [data-action=next]').click();
+    // Follow the production auto-advance; its 1.5 s timer can remove the
+    // shortcut while a slower browser is waiting for the button to stabilize.
+    if(room.id<INFERNO_LEVELS.length)await expect(page.locator('.mobile-level b')).toHaveText(String(room.id+1).padStart(2,'0'));
   }
   expect((await saved(page)).unlocked).toBe(1);
   expect(Object.keys((await saved(page)).records)).toHaveLength(12);
