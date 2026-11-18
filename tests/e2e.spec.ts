@@ -346,6 +346,18 @@ test('touch controls walk safely and accept gestures across the game screen', as
   await expect(page.locator('.dpad')).not.toBeVisible();
   const board=(await page.locator('#board').boundingBox())!;
   expect(board.height).toBeGreaterThan(500);
+  await page.locator('dialog .primary[data-action=close]').tap();
+  await expect(page.locator('dialog[open]')).toHaveCount(0);
+  await action(page,'undo').tap();
+  await expect(page.locator('#moves')).toHaveText('2');
+  await expect(action(page,'undo')).toBeDisabled();
+  await action(page,'restart').tap();
+  await expect(page.locator('#moves')).toHaveText('0');
+  await expect(action(page,'undo')).toBeDisabled();
+  await action(page,'hint').tap();
+  await expect.poll(async()=>(await saved(page)).assists[String(level.id)]?.hintsUsed).toBe(1);
+  await action(page,'hint').tap();
+  await expect(action(page,'hint')).toBeDisabled();
 });
 
 test('production service worker reloads and plays with the network offline', async ({ page, context }) => {
