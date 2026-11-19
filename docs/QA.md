@@ -1,16 +1,25 @@
 # BOXSHIFT — Registo de validação
 
-## Versão 2.0 · 1 de novembro de 2026
+## Versão 2.0 · 18 de novembro de 2026
 
-**Publicação desta revisão: pendente, verificada em 15 de novembro de 2026.** O código em `src/`, os testes novos e o manifesto já estão guardados no GitHub. A sessão da conta está recuperada. Está em curso o envio dos ficheiros de entrada e documentação, seguido da verificação no GitHub e confirmação do endereço público. O jogo anteriormente publicado permanece acessível. Não confundir a validação local abaixo com publicação da versão 2.0.
+**Versão 2.0 publicada em 18 de novembro de 2026; recursos HTTPS novamente verificados em 19 de novembro.** [Jogar BOXSHIFT](https://scalifornia.github.io/boxshift-puzzle/). O commit `ad4b75f886619e720c3ff94e6b669e1b1e15b299` passou na [verificação e publicação 44406018854](https://github.com/Scalifornia/boxshift-puzzle/actions/runs/44406018854). Os 14 recursos pedidos pelo cache offline, incluindo a página, manifesto, ícones, fonte, scripts e estilos, têm os mesmos bytes do build local testado. Cache publicado: `boxshift-bf55f6bf2ca2`.
+
+**A execução final no GitHub aprovou 101 testes de regras/persistência e os 37 cenários de navegador sem repetições**, em 8,9 minutos de testes de navegador. Os 40 níveis clássicos e as 12 salas infernais foram concluídos por teclado em Chromium e WebKit, com avanço automático e marcador exato de cada sala. O deploy GitHub Pages também foi aprovado.
+
+Na [execução anterior 44402434951](https://github.com/Scalifornia/boxshift-puzzle/actions/runs/44402434951), 36 cenários passaram na primeira tentativa e o percurso infernal em WebKit passou na repetição em 39,7 segundos. A primeira tentativa atingiu 600 segundos ao tentar clicar no atalho seguinte: o registo mostra que o botão foi removido durante a tentativa, enquanto o jogo avançava automaticamente. O teste foi corrigido para aguardar o marcador exato da sala seguinte, tanto na campanha clássica como na infernal. As asserções de soluções, recordes e orçamento foram preservadas. O resultado final acima confirma a correção do teste sem mudar os ficheiros executáveis do jogo.
+
+No endereço público, 13 cenários iniciais passaram em Chromium e WebKit, incluindo as 12 salas infernais em ambos os motores, progresso, animações, Joker, sugestões, gestos globais, layouts e recarregamento offline. Uma verificação adicional com toques nativos na simulação de iPhone 13 passou em ambos: ajuda por modo, pausa/continuação, Joker de duas jogadas uma única vez, duas sugestões sem ativação duplicada e persistência após recarregar. A emulação não substitui a validação num iPhone físico.
+
+Os 40 níveis clássicos e as 12 salas infernais também foram concluídos no endereço público em Chromium e WebKit, aguardando o avanço automático e o marcador exato de cada sala: quatro percursos aprovados em 2,3 minutos. O teste sincronizado está guardado no GitHub e foi aprovado na execução final indicada acima. Os ficheiros executáveis do jogo não mudaram neste ajuste.
+
+A [primeira execução da versão 2.0](https://github.com/Scalifornia/boxshift-puzzle/actions/runs/43728560861), em 15 de novembro, bloqueou corretamente a publicação: 36 cenários passaram e o cenário de toque falhou ao abrir a pausa após um gesto nas duas tentativas. A correção ativa os botões no fim do toque e cancela o clique sintetizado para evitar duplicações. O cenário foi reforçado com pausa/continuação, Joker, reinício e sugestões por toque; nenhuma asserção que detetou o problema foi removida.
 
 - TypeScript, ESLint e build de produção aprovados.
 - **101 testes de lógica e persistência aprovados**, incluindo os 12 novos puzzles resolvidos sem consultar as rotas guardadas, regras de pontapé/ataque/chave/armadilhas, orçamento e compatibilidade dos dados existentes.
-- **35 cenários E2E aprovados numa execução completa em Chromium e WebKit**, com os 40 níveis clássicos e os 12 infernais concluídos por teclado nos dois motores. Inclui Joker, sugestões, derrota e recuperação, progresso, modos, idiomas, offline, gestos fora do tabuleiro e janelas mobile.
-- **37 cenários E2E distintos aprovados no total:** 35 na suite completa e 7 numa execução focada final, que repete 5 cenários e acrescenta 2 de animações. Os novos testes confirmaram a cena viva do menu sem progresso artificial, o impacto de golpe e a imobilidade visual com redução de movimento, em Chromium e WebKit. Offline e gestos foram repetidos sobre o build final.
+- **37 cenários E2E aprovados numa única execução completa em 15 de novembro de 2026 (1 minuto local):** Chromium e WebKit, todos os 40 níveis clássicos e as 12 salas infernais por teclado, Joker, sugestões, derrota e recuperação, progresso, modos, idiomas, offline, gestos fora do tabuleiro e layouts mobile. O cenário tátil valida pausa e continuação imediatamente após o gesto, Joker recuando duas jogadas, reinício e duas sugestões. Inclui animações do menu e dos golpes sem progresso artificial e redução de movimento.
 - Layouts originais a 320×568, 390×844, 844×390, 768×1024, 1366×768 e 1920×1080. A nova campanha inclui também 390×650 para o espaço reduzido por barras do navegador.
 - Renderização infernal, faíscas, golpes, menu em demonstração e áudio inteiramente originais. FPS sustentados, equilíbrio auditivo e teste desta revisão num iPhone físico permanecem pendentes.
-- Nenhuma supressão de regras de design foi adicionada. O ajuste mobile remove a antiga limitação de altura do menu e liberta o espaço ocupado pelo D-pad.
+- Os três avisos de design anteriores foram reavaliados: o progresso transita por `transform`; os contornos móveis relevantes são neutros e de 1 px, sem o realce espesso assinalado. Nenhuma supressão foi adicionada e nenhum desses avisos ficou por corrigir. O ajuste mobile remove a antiga limitação de altura do menu e liberta o espaço ocupado pelo D-pad.
 
 ## Registo da versão anteriormente publicada
 
